@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <title>משחק חשבון לכיתות א-ב</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            background-color: white;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #question {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .answer-btn {
+            font-size: 18px;
+            margin: 10px;
+            padding: 10px 20px;
+            width: 100px;
+        }
+        #timer {
+            font-size: 18px;
+            color: red;
+        }
+        #lives {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>משחק חשבון מהיר</h1>
+        <div id="lives">❤️❤️❤️</div>
+        <div id="timer">20 שניות</div>
+        <div id="question">8 + 5 = ?</div>
+        <div id="answer-options">
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+        </div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const operations = ['+', '-', '*', '/'];
+        let currentQuestion = {};
+        let timeLeft = 20;
+        let timer;
+        let lives = 3;
+        let score = 0;
+        let questionCount = 0;
+
+        function generateQuestion() {
+            let num1, num2, result;
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            
+            do {
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
+                
+                switch(operation) {
+                    case '+':
+                        result = num1 + num2;
+                        break;
+                    case '-':
+                        result = num1 - num2;
+                        break;
+                    case '*':
+                        result = num1 * num2;
+                        break;
+                    case '/':
+                        // רק חילוק שנותן מספר שלם
+                        result = Math.floor(num1 / num2);
+                        num1 = result * num2;
+                        break;
+                }
+            } while (result < 0);
+
+            currentQuestion = {
+                question: `${num1} ${operation} ${num2} = ?`,
+                answer: result
+            };
+
+            document.getElementById('question').textContent = currentQuestion.question;
+            
+            const answerButtons = document.querySelectorAll('.answer-btn');
+            const correctAnswerIndex = Math.floor(Math.random() * 4);
+            
+            answerButtons.forEach((btn, index) => {
+                if (index === correctAnswerIndex) {
+                    btn.textContent = result;
+                } else {
+                    let wrongAnswer;
+                    do {
+                        wrongAnswer = result + Math.floor(Math.random() * 5) - 2;
+                    } while (wrongAnswer === result || wrongAnswer < 0);
+                    btn.textContent = wrongAnswer;
+                }
+            });
+
+            resetTimer();
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timeLeft = 20;
+            document.getElementById('timer').textContent = '20 שניות';
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = `${timeLeft} שניות`;
+                
+                if (timeLeft <= 0) {
+                    handleWrongAnswer();
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(buttonClicked) {
+            const userAnswer = parseInt(buttonClicked.textContent);
+            
+            if (userAnswer === currentQuestion.answer) {
+                score++;
+                questionCount++;
+                document.getElementById('result').textContent = 'תשובה נכונה! 👏';
+                if (questionCount < 20) {
+                    generateQuestion();
+                } else {
+                    endGame();
+                }
+            } else {
+                handleWrongAnswer();
+            }
+        }
+
+        function handleWrongAnswer() {
+            lives--;
+            clearInterval(timer);
+            
+            const livesElement = document.getElementById('lives');
+            livesElement.textContent = '❤️'.repeat(lives);
+            
+            document.getElementById('result').textContent = `תשובה לא נכונה. התשובה הנכונה הייתה: ${currentQuestion.answer}`;
+            
+            if (lives > 0 && questionCount < 20) {
+                setTimeout(generateQuestion, 2000);
+            } else {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            document.getElementById('game-container').innerHTML = `
+                <h1>סיום המשחק</h1>
+                <p>הציון שלך: ${score}/20</p>
+                <button onclick="location.reload()">התחל מחדש</button>
+            `;
+        }
+
+        // התחלת המשחק
+        generateQuestion();
+    </script>
+</body>
+</html>
